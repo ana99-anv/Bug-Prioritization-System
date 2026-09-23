@@ -1,6 +1,6 @@
 # Bug-Prioritization-System
 
-🐞 Bug Prioritization System
+ 
 
 I built this project to answer a question that seemed simple at first: can machine learning help engineering teams figure out which bugs actually need urgent attention?
 
@@ -27,7 +27,7 @@ P5	17.1%
 
 P3 dominates. That imbalance shapes almost every decision in this project, so it's worth stating up front instead of burying it.
 
-What I tried first (and why it wasn't good enough)
+What I tried first (and why it wasn't good enough): 
 
 I built a 5-class XGBoost model on TF-IDF text features (from the bug summary) plus one-hot encoded categorical features (type, component, OS, version) and a couple of engineered numeric features (summary length, word count).
 
@@ -71,12 +71,13 @@ This is the part I almost skipped, and I'm glad I didn't.
 
 Everything above uses a random train/test split, which assumes the test set looks statistically like the training set. That's not really true for a system meant to be deployed forward in time. So I re-ran the same pipeline using a chronological split — training on an earlier period, testing on a later one — to get a more honest sense of how this would behave in production.
 
-Metric	Random split	Chronological split
-Accuracy	66.75%	61.7%
-Macro-F1	0.326	0.303
-Urgent recall @ default 0.5 threshold	12.37%	3.1%
-Recalibrated threshold for 80% recall	0.097	0.0658
-Precision at 80% recall	24.4%	41.4%
+| Metric | Random Split | Chronological Split |
+|---|---:|---:|
+| Accuracy | 66.75% | 61.70% |
+| Macro-F1 | 0.326 | 0.303 |
+| Urgent Recall @ Default 0.5 Threshold | 12.37% | 3.10% |
+| Recalibrated Threshold for 80% Recall | 0.097 | 0.0658 |
+| Precision at 80% Recall | 24.4% | 41.4% |
 
 The accuracy/F1 drop is fairly mild on its own. What's actually alarming is the base rate of urgent bugs nearly tripled between the two periods — from about 10.4% of training data to 31.0% of the later test window — and the default threshold's recall collapsed to 3.1%. A threshold that worked fine at training time basically stopped working once the underlying data shifted.
 
