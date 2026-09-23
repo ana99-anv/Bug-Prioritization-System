@@ -6,7 +6,7 @@ I built this project to answer a question that seemed simple at first: can machi
 
 It turned out to be a lot less simple than I expected and honestly, most of what I learned came from things not working the way I assumed they would. This README walks through that journey, not just the final numbers.
 
-[**Try Live App **](https://bug-prioritization-system-xusnsps3advoappxvgfaipg.streamlit.app/))
+[**Try Live App **](https://bug-prioritization-system-xusnsps3advoappxvgfaipg.streamlit.app/)
 
 The short version
 
