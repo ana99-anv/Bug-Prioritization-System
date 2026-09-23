@@ -1,13 +1,11 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import joblib
-from scipy import sparse
 import matplotlib.pyplot as plt
 
 
 # ============================================================
-# PAGE CONFIG
+# PAGE CONFIGURATION
 # ============================================================
 
 st.set_page_config(
@@ -18,75 +16,48 @@ st.set_page_config(
 
 
 # ============================================================
-# LOAD MODELS
+# PROJECT METRICS
 # ============================================================
 
-@st.cache_resource
-def load_models():
+MULTICLASS_ACCURACY = 0.6675
+MULTICLASS_MACRO_F1 = 0.3256
+BINARY_ACCURACY = 0.8590
 
-    model = joblib.load(
-        "saved_models/model.pkl"
-    )
+DEFAULT_THRESHOLD = 0.50
+RECALL_THRESHOLD = 0.097
+COST_THRESHOLD = 0.08
 
-    binary_model = joblib.load(
-        "saved_models/binary_model.pkl"
-    )
+DEFAULT_PRECISION = 0.571
+DEFAULT_RECALL = 0.1237
+DEFAULT_F1 = 0.2018
 
-    tfidf = joblib.load(
-        "saved_models/tfidf.pkl"
-    )
+RECALL_TARGET_PRECISION = 0.2435
+RECALL_TARGET_RECALL = 0.8007
 
-    encoder = joblib.load(
-        "saved_models/encoder.pkl"
-    )
+COST_PRECISION = 0.2171
+COST_RECALL = 0.8729
 
-    scaler = joblib.load(
-        "saved_models/scaler.pkl"
-    )
+FN_COST = 10
+FP_COST = 1
 
-    label_encoder = joblib.load(
-        "saved_models/label_encoder.pkl"
-    )
-
-    metadata = joblib.load(
-        "saved_models/metadata.pkl"
-    )
-
-    return (
-        model,
-        binary_model,
-        tfidf,
-        encoder,
-        scaler,
-        label_encoder,
-        metadata
-    )
-
-
-(
-    model,
-    binary_model,
-    tfidf,
-    encoder,
-    scaler,
-    label_encoder,
-    metadata
-) = load_models()
+TEMPORAL_ACCURACY = 0.6170
+TEMPORAL_MACRO_F1 = 0.3027
+TEMPORAL_URGENT_BASE_RATE = 0.310
+TEMPORAL_DEFAULT_RECALL = 0.031
+TEMPORAL_THRESHOLD = 0.0658
+TEMPORAL_PRECISION = 0.414
 
 
 # ============================================================
 # SIDEBAR NAVIGATION
 # ============================================================
 
-st.sidebar.title("🐞 Bug Triage")
-
-st.sidebar.markdown(
-    "### Navigation"
-)
+st.sidebar.title("🐞 Bug Prioritization")
 
 page = st.sidebar.radio(
-    "Go to",
+    "Navigation",
     [
+        "🏠 Home",
         "📊 Dashboard",
         "🔮 Predict Bug",
         "📂 Batch Prediction",
@@ -96,224 +67,309 @@ page = st.sidebar.radio(
 
 st.sidebar.divider()
 
-st.sidebar.info(
+st.sidebar.markdown(
     """
-    **Human-in-the-loop**
+### Project
 
-    The model provides predictions and
-    recommendations. Final triage decisions
-    remain with a human reviewer.
-    """
+**Intelligent Bug Prioritization System**
+
+Machine-learning based bug triage using:
+
+- TF-IDF
+- Categorical features
+- XGBoost
+- Threshold optimization
+- Cost-sensitive decisions
+- Human-in-the-loop review
+"""
 )
 
 
 # ============================================================
-# PAGE 1 — DASHBOARD
+# HOME PAGE
 # ============================================================
 
-if page == "📊 Dashboard":
+if page == "🏠 Home":
 
-    st.title("📊 Model Dashboard")
+    st.title("🐞 Intelligent Bug Prioritization System")
 
-    st.markdown("""
-    ## Intelligent Bug Prioritization
+    st.markdown(
+        """
+        ## AI-Assisted Bug Triage
 
-    This dashboard summarizes model performance and
-    threshold-based urgent bug routing.
-    """)
+        This project explores how machine learning can assist
+        software-engineering teams in prioritizing bug reports.
+
+        The system was designed to:
+
+        - Predict bug priority from **P1–P5**
+        - Identify potentially **urgent bugs**
+        - Optimize the urgent-review probability threshold
+        - Analyze precision–recall trade-offs
+        - Incorporate cost-sensitive decision making
+        - Support **human-in-the-loop** triage
+        """
+    )
 
     st.divider()
-
-    # --------------------------------------------------------
-    # MODEL PERFORMANCE
-    # --------------------------------------------------------
-
-    st.subheader("📈 Model Performance")
 
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-
         st.metric(
             "Multiclass Accuracy",
-            f"{metadata['multiclass_accuracy']:.2%}"
+            "66.75%"
         )
 
     with col2:
-
         st.metric(
             "Multiclass Macro-F1",
-            f"{metadata['multiclass_macro_f1']:.3f}"
+            "0.326"
         )
 
     with col3:
-
         st.metric(
             "Binary Accuracy",
-            f"{metadata['binary_accuracy']:.2%}"
+            "85.90%"
         )
 
     with col4:
-
         st.metric(
-            "80% Recall Threshold",
-            f"{metadata['urgent_recall_threshold']:.3f}"
+            "Urgent Recall @ 0.097",
+            "80.07%"
         )
 
     st.divider()
 
-    # --------------------------------------------------------
-    # WORKFLOW
-    # --------------------------------------------------------
-
     st.subheader("🔄 System Workflow")
 
-    st.markdown("""
-    **Bug Report**
+    st.markdown(
+        """
+        **Bug Report**
 
-    ↓
+        ↓
 
-    **Feature Extraction**
+        **Feature Extraction**
 
-    ↓
+        ↓
 
-    **Priority Prediction**
+        **Priority Prediction**
 
-    ↓
+        ↓
 
-    **Urgent Probability**
+        **Urgent Probability**
 
-    ↓
+        ↓
 
-    **Threshold Decision**
+        **Threshold Decision**
 
-    ↓
+        ↓
 
-    **Human Review**
-    """)
+        **Human Review**
+        """
+    )
 
     st.divider()
 
-    # --------------------------------------------------------
-    # THRESHOLD COMPARISON
-    # --------------------------------------------------------
+    st.subheader("🎯 Why Threshold Optimization?")
+
+    st.markdown(
+        """
+        At the default probability threshold of **0.50**, the
+        binary classifier identifies relatively few urgent bugs.
+
+        Because missing an urgent bug can be costly, the decision
+        threshold can be lowered to increase urgent-bug recall.
+
+        However, lowering the threshold also sends more normal
+        bugs to the human-review queue.
+
+        Therefore, the deployment problem is a
+        **precision–recall and operational-capacity trade-off**.
+        """
+    )
+
+    st.info(
+        """
+        **Human-in-the-loop:** The model provides a recommendation.
+        A human triager makes the final priority decision.
+        """
+    )
+
+    st.divider()
+
+    st.subheader("📌 Important Deployment Consideration")
+
+    st.warning(
+        """
+        This GitHub demo presents the project's evaluation results
+        and decision framework. The deployed demo does not load
+        the trained model artifacts, so predictions on the
+        interactive pages are illustrative rather than outputs
+        from the trained XGBoost model.
+        """
+    )
+
+
+# ============================================================
+# DASHBOARD
+# ============================================================
+
+elif page == "📊 Dashboard":
+
+    st.title("📊 Model Dashboard")
+
+    st.markdown(
+        """
+        Overview of the model's evaluation performance and
+        different urgent-bug threshold strategies.
+        """
+    )
+
+    st.subheader("📈 Model Performance")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.metric(
+            "Multiclass Accuracy",
+            f"{MULTICLASS_ACCURACY:.2%}"
+        )
+
+    with col2:
+        st.metric(
+            "Multiclass Macro-F1",
+            f"{MULTICLASS_MACRO_F1:.3f}"
+        )
+
+    with col3:
+        st.metric(
+            "Binary Accuracy",
+            f"{BINARY_ACCURACY:.2%}"
+        )
+
+    st.divider()
 
     st.subheader("🎯 Threshold Strategies")
 
-    threshold_df = pd.DataFrame({
-
-        "Strategy": [
-            "Default",
-            "80% Recall Target",
-            "Cost-Minimizing"
-        ],
-
-        "Threshold": [
-            metadata["default_threshold"],
-            metadata["urgent_recall_threshold"],
-            metadata["cost_minimizing_threshold"]
-        ],
-
-        "Precision": [
-            metadata["urgent_precision_default"],
-            metadata["recall_target_precision"],
-            0.2171
-        ],
-
-        "Recall": [
-            metadata["urgent_recall_default"],
-            metadata["recall_target_recall"],
-            0.8729
-        ]
-    })
+    threshold_df = pd.DataFrame(
+        {
+            "Strategy": [
+                "Default",
+                "80% Recall Target",
+                "Cost-Minimizing"
+            ],
+            "Threshold": [
+                DEFAULT_THRESHOLD,
+                RECALL_THRESHOLD,
+                COST_THRESHOLD
+            ],
+            "Precision": [
+                DEFAULT_PRECISION,
+                RECALL_TARGET_PRECISION,
+                COST_PRECISION
+            ],
+            "Recall": [
+                DEFAULT_RECALL,
+                RECALL_TARGET_RECALL,
+                COST_RECALL
+            ]
+        }
+    )
 
     st.dataframe(
-        threshold_df.style.format({
-            "Threshold": "{:.4f}",
-            "Precision": "{:.2%}",
-            "Recall": "{:.2%}"
-        }),
+        threshold_df.style.format(
+            {
+                "Threshold": "{:.4f}",
+                "Precision": "{:.2%}",
+                "Recall": "{:.2%}"
+            }
+        ),
         use_container_width=True,
         hide_index=True
     )
 
     st.divider()
 
-    # --------------------------------------------------------
-    # 80% RECALL OPERATING POINT
-    # --------------------------------------------------------
-
     st.subheader("🎯 80% Recall Operating Point")
 
     col1, col2, col3 = st.columns(3)
 
-    col1.metric(
-        "Threshold",
-        f"{metadata['urgent_recall_threshold']:.3f}"
+    with col1:
+        st.metric(
+            "Threshold",
+            f"{RECALL_THRESHOLD:.3f}"
+        )
+
+    with col2:
+        st.metric(
+            "Urgent Recall",
+            f"{RECALL_TARGET_RECALL:.2%}"
+        )
+
+    with col3:
+        st.metric(
+            "Urgent Precision",
+            f"{RECALL_TARGET_PRECISION:.2%}"
+        )
+
+    st.markdown(
+        f"""
+        At a threshold of **{RECALL_THRESHOLD:.3f}**, the evaluation
+        data produced approximately **80% urgent recall**.
+
+        This is one operating point on the precision–recall curve.
+        The appropriate threshold depends on review capacity and
+        the relative costs of false negatives and false positives.
+        """
     )
-
-    col2.metric(
-        "Urgent Recall",
-        f"{metadata['recall_target_recall']:.2%}"
-    )
-
-    col3.metric(
-        "Urgent Precision",
-        f"{metadata['recall_target_precision']:.2%}"
-    )
-
-    st.markdown("""
-    This represents an operating point on the
-    precision-recall trade-off.
-
-    The appropriate threshold can be adjusted based on
-    triage capacity and the relative costs of false
-    negatives and false positives.
-    """)
 
     st.divider()
 
-    # --------------------------------------------------------
-    # HUMAN IN LOOP
-    # --------------------------------------------------------
-
     st.subheader("👤 Human-in-the-Loop")
 
-    st.markdown("""
-    **Model prediction → Urgent screening → Human review → Final decision**
+    st.markdown(
+        """
+        **Model prediction → Urgent screening → Human review → Final decision**
 
-    The system is designed as a decision-support tool.
-    It does not autonomously override human triage decisions.
-    """)
+        The model is designed as a decision-support system.
+
+        It does not autonomously determine the final bug priority.
+        """
+    )
+
+    st.warning(
+        """
+        False negatives are particularly important because an
+        urgent bug incorrectly classified as normal may be delayed.
+        """
+    )
 
 
 # ============================================================
-# PAGE 2 — PREDICT BUG
+# SINGLE BUG DEMO
 # ============================================================
 
 elif page == "🔮 Predict Bug":
 
-    st.title("🔮 Single Bug Prediction")
+    st.title("🔮 Single Bug Prediction Demo")
 
-    st.markdown("""
-    Enter the bug details below. The model will provide:
+    st.markdown(
+        """
+        Enter bug information to explore how an urgent-screening
+        decision could be made.
 
-    - **Predicted Priority (P1–P5)**
-    - **Priority confidence**
-    - **Urgent probability**
-    - **Urgent / Normal routing recommendation**
-    - **Human-in-the-loop review recommendation**
-    """)
+        **Note:** This page is an illustrative demo and does not
+        load the trained XGBoost model.
+        """
+    )
 
-    # --------------------------------------------------------
-    # THRESHOLD
-    # --------------------------------------------------------
-
-    default_threshold = float(
-        metadata.get(
-            "urgent_recall_threshold",
-            0.097
-        )
+    st.warning(
+        """
+        Demo mode: the probability shown below is generated using
+        a transparent illustrative scoring function. It should not
+        be interpreted as an actual prediction from the trained model.
+        """
     )
 
     st.divider()
@@ -328,36 +384,7 @@ elif page == "🔮 Predict Bug":
         height=150
     )
 
-    # --------------------------------------------------------
-    # CATEGORICAL OPTIONS
-    # --------------------------------------------------------
-
     st.subheader("🏷️ Bug Attributes")
-
-    def clean_options(categories):
-
-        return [
-            str(value)
-            for value in categories
-            if str(value).lower()
-            not in ["missing", "nan", "none"]
-        ]
-
-    type_options = clean_options(
-        encoder.categories_[0]
-    )
-
-    component_options = clean_options(
-        encoder.categories_[1]
-    )
-
-    os_options = clean_options(
-        encoder.categories_[2]
-    )
-
-    version_options = clean_options(
-        encoder.categories_[3]
-    )
 
     col1, col2 = st.columns(2)
 
@@ -365,29 +392,47 @@ elif page == "🔮 Predict Bug":
 
         bug_type = st.selectbox(
             "Type",
-            options=type_options
+            [
+                "defect",
+                "enhancement",
+                "task",
+                "blocker"
+            ]
         )
 
         component = st.selectbox(
             "Component",
-            options=component_options
+            [
+                "Browser",
+                "Core",
+                "UI",
+                "Network",
+                "Database"
+            ]
         )
 
     with col2:
 
         operating_system = st.selectbox(
-            "OS",
-            options=os_options
+            "Operating System",
+            [
+                "Windows",
+                "Linux",
+                "Mac OS",
+                "Android",
+                "Other"
+            ]
         )
 
         version = st.selectbox(
             "Version",
-            options=version_options
+            [
+                "Latest",
+                "Current",
+                "Older",
+                "Unknown"
+            ]
         )
-
-    # --------------------------------------------------------
-    # THRESHOLD
-    # --------------------------------------------------------
 
     st.divider()
 
@@ -397,13 +442,7 @@ elif page == "🔮 Predict Bug":
         "Urgent probability threshold",
         min_value=0.01,
         max_value=0.50,
-        value=float(
-            np.clip(
-                default_threshold,
-                0.01,
-                0.50
-            )
-        ),
+        value=RECALL_THRESHOLD,
         step=0.01
     )
 
@@ -411,20 +450,15 @@ elif page == "🔮 Predict Bug":
         f"Current threshold: **{selected_threshold:.2f}**"
     )
 
-    st.markdown("""
-    A lower threshold prioritizes recall and catches more
-    potentially urgent bugs, while a higher threshold
-    prioritizes precision and reduces human-review workload.
-    """)
-
-    # --------------------------------------------------------
-    # PREDICTION
-    # --------------------------------------------------------
-
-    st.divider()
+    st.markdown(
+        """
+        Lower thresholds increase recall but also increase the
+        number of bugs sent for human review.
+        """
+    )
 
     predict_button = st.button(
-        "🚀 Predict Bug Priority",
+        "🚀 Run Demo Prediction",
         type="primary",
         use_container_width=True
     )
@@ -434,275 +468,201 @@ elif page == "🔮 Predict Bug":
         if not summary.strip():
 
             st.warning(
-                "Please enter a bug summary before running prediction."
-            )
-
-            st.stop()
-
-        with st.spinner("Analyzing bug..."):
-
-            # TEXT FEATURES
-
-            clean_summary = (
-                summary
-                .lower()
-                .strip()
-            )
-
-            X_text = tfidf.transform(
-                [clean_summary]
-            )
-
-            # CATEGORICAL FEATURES
-
-            X_cat_df = pd.DataFrame({
-                "Type": [bug_type],
-                "Component": [component],
-                "OS": [operating_system],
-                "Version": [version]
-            })
-
-            X_cat = encoder.transform(
-                X_cat_df
-            )
-
-            # NUMERICAL FEATURES
-
-            X_num_df = pd.DataFrame({
-                "summary_length": [
-                    len(clean_summary)
-                ],
-                "word_count": [
-                    len(clean_summary.split())
-                ]
-            })
-
-            X_num = scaler.transform(
-                X_num_df
-            )
-
-            X_num = sparse.csr_matrix(
-                X_num
-            )
-
-            # COMBINE FEATURES
-
-            X_final = sparse.hstack([
-                X_text,
-                X_cat,
-                X_num
-            ]).tocsr()
-
-            # MULTICLASS
-
-            multiclass_pred = model.predict(
-                X_final
-            )
-
-            predicted_priority = (
-                label_encoder.inverse_transform(
-                    multiclass_pred
-                )[0]
-            )
-
-            multiclass_proba = (
-                model.predict_proba(
-                    X_final
-                )[0]
-            )
-
-            priority_confidence = (
-                multiclass_proba.max()
-            )
-
-            # BINARY
-
-            binary_proba = float(
-                binary_model
-                .predict_proba(X_final)[0, 1]
-            )
-
-            urgent_prediction = int(
-                binary_proba >= selected_threshold
-            )
-
-            # ROUTING
-
-            if urgent_prediction == 1:
-
-                routing_decision = "URGENT REVIEW"
-
-                routing_message = (
-                    "This bug should be routed to a human "
-                    "triager for urgent review."
-                )
-
-            else:
-
-                routing_decision = "NORMAL"
-
-                routing_message = (
-                    "This bug does not meet the current "
-                    "urgent routing threshold."
-                )
-
-        # ----------------------------------------------------
-        # RESULTS
-        # ----------------------------------------------------
-
-        st.divider()
-
-        st.subheader("📊 Prediction Results")
-
-        col1, col2, col3 = st.columns(3)
-
-        col1.metric(
-            "Predicted Priority",
-            predicted_priority
-        )
-
-        col2.metric(
-            "Priority Confidence",
-            f"{priority_confidence:.1%}"
-        )
-
-        col3.metric(
-            "Urgent Probability",
-            f"{binary_proba:.1%}"
-        )
-
-        if urgent_prediction == 1:
-
-            st.error(
-                f"🚨 **{routing_decision}**"
+                "Please enter a bug summary."
             )
 
         else:
 
-            st.success(
-                f"✅ **{routing_decision}**"
+            # ------------------------------------------------
+            # ILLUSTRATIVE SCORING FUNCTION
+            # ------------------------------------------------
+
+            text = summary.lower()
+
+            urgent_keywords = [
+                "crash",
+                "crashes",
+                "data loss",
+                "security",
+                "cannot start",
+                "failure",
+                "broken",
+                "freeze",
+                "freezes",
+                "hang",
+                "critical",
+                "blocker"
+            ]
+
+            keyword_score = sum(
+                word in text
+                for word in urgent_keywords
             )
 
-        st.info(
-            f"""
-            **Urgent probability:** {binary_proba:.2%}
+            length_score = min(
+                len(text) / 500,
+                1
+            )
 
-            **Threshold:** {selected_threshold:.2f}
+            probability = (
+                0.05
+                + 0.08 * keyword_score
+                + 0.05 * length_score
+            )
 
-            {routing_message}
+            if bug_type == "blocker":
+                probability += 0.10
 
-            **Human-in-the-loop:** The model provides a
-            recommendation; the final triage decision remains
-            with a human reviewer.
-            """
-        )
+            if component == "Core":
+                probability += 0.03
 
-        # ----------------------------------------------------
-        # PRIORITY PROBABILITIES
-        # ----------------------------------------------------
+            probability = float(
+                np.clip(
+                    probability,
+                    0.01,
+                    0.95
+                )
+            )
 
-        st.subheader("📈 Priority Probabilities")
+            # ------------------------------------------------
+            # ILLUSTRATIVE PRIORITY
+            # ------------------------------------------------
 
-        priority_classes = (
-            label_encoder.classes_
-        )
+            if probability >= 0.70:
+                priority = "P1"
 
-        probability_df = pd.DataFrame({
-            "Priority": priority_classes,
-            "Probability": multiclass_proba
-        })
+            elif probability >= 0.50:
+                priority = "P2"
 
-        probability_df["Probability"] = (
-            probability_df["Probability"]
-            .round(4)
-        )
+            elif probability >= 0.30:
+                priority = "P3"
 
-        st.dataframe(
-            probability_df,
-            use_container_width=True,
-            hide_index=True
-        )
+            elif probability >= 0.15:
+                priority = "P4"
 
-        # ----------------------------------------------------
-        # REVIEW GUIDANCE
-        # ----------------------------------------------------
+            else:
+                priority = "P5"
 
-        st.subheader("🧑‍💻 Human Review Guidance")
+            urgent = probability >= selected_threshold
 
-        st.markdown(f"""
-        **Model recommendation**
+            confidence = min(
+                0.55 + abs(probability - 0.50),
+                0.95
+            )
 
-        - Predicted priority: **{predicted_priority}**
-        - Priority confidence: **{priority_confidence:.1%}**
-        - Urgent probability: **{binary_proba:.1%}**
-        - Routing threshold: **{selected_threshold:.2f}**
-        - Recommended route: **{routing_decision}**
+            st.divider()
 
-        The prediction is intended to **assist**, not replace,
-        the engineering triager.
-        """)
+            st.subheader("📊 Demo Prediction Results")
+
+            col1, col2, col3 = st.columns(3)
+
+            with col1:
+                st.metric(
+                    "Illustrative Priority",
+                    priority
+                )
+
+            with col2:
+                st.metric(
+                    "Illustrative Confidence",
+                    f"{confidence:.1%}"
+                )
+
+            with col3:
+                st.metric(
+                    "Illustrative Urgent Probability",
+                    f"{probability:.1%}"
+                )
+
+            if urgent:
+
+                st.error(
+                    "🚨 URGENT REVIEW"
+                )
+
+                st.info(
+                    """
+                    The illustrative probability exceeds the selected
+                    threshold, so the bug would be routed to human review.
+                    """
+                )
+
+            else:
+
+                st.success(
+                    "✅ NORMAL"
+                )
+
+                st.info(
+                    """
+                    The illustrative probability does not exceed the
+                    selected urgent-routing threshold.
+                    """
+                )
+
+            st.subheader("🧑‍💻 Human Review Guidance")
+
+            st.markdown(
+                f"""
+                **Illustrative model recommendation**
+
+                - Priority: **{priority}**
+                - Urgent probability: **{probability:.1%}**
+                - Threshold: **{selected_threshold:.2f}**
+                - Route: **{"URGENT REVIEW" if urgent else "NORMAL"}**
+
+                The final triage decision should remain with a human
+                engineering reviewer.
+                """
+            )
 
 
 # ============================================================
-# PAGE 3 — BATCH PREDICTION
+# BATCH PREDICTION DEMO
 # ============================================================
 
 elif page == "📂 Batch Prediction":
 
-    st.title("📂 Batch Bug Prediction")
+    st.title("📂 Batch Bug Prediction Demo")
 
-    st.markdown("""
-    Upload a CSV containing bug reports and the model will predict:
+    st.markdown(
+        """
+        Upload a CSV containing bug reports to explore an
+        illustrative urgent-routing workflow.
 
-    - **Bug Priority (P1–P5)**
-    - **Urgent probability**
-    - **Urgent / Normal routing**
-    - **Prediction confidence**
-    """)
+        **Required columns:**
 
-    default_threshold = float(
-        metadata.get(
-            "urgent_recall_threshold",
-            0.097
-        )
+        `Summary`, `Type`, `Component`, `OS`, `Version`
+        """
+    )
+
+    st.warning(
+        """
+        Demo mode: uploaded bugs are processed using an illustrative
+        scoring function. The trained XGBoost model is not loaded.
+        """
     )
 
     st.divider()
 
-    st.subheader("📄 Upload Bug CSV")
-
     uploaded_file = st.file_uploader(
         "Choose a CSV file",
-        type=["csv"],
-        key="batch_csv"
+        type=["csv"]
     )
 
     if uploaded_file is None:
 
         st.info(
-            "👆 Please upload a CSV file to start batch prediction."
+            "👆 Upload a CSV file to start."
         )
 
     else:
 
-        df = pd.read_csv(
-            uploaded_file
-        )
+        df = pd.read_csv(uploaded_file)
 
         st.success(
             f"Successfully loaded {len(df):,} bug reports."
         )
-
-        with st.expander("👀 Preview uploaded data"):
-
-            st.dataframe(
-                df.head(10),
-                use_container_width=True
-            )
-
-        # ----------------------------------------------------
-        # REQUIRED COLUMNS
-        # ----------------------------------------------------
 
         required_columns = [
             "Summary",
@@ -713,9 +673,9 @@ elif page == "📂 Batch Prediction":
         ]
 
         missing_columns = [
-            col
-            for col in required_columns
-            if col not in df.columns
+            column
+            for column in required_columns
+            if column not in df.columns
         ]
 
         if missing_columns:
@@ -727,230 +687,128 @@ elif page == "📂 Batch Prediction":
 
         else:
 
-            # ------------------------------------------------
-            # THRESHOLD
-            # ------------------------------------------------
+            with st.expander("👀 Preview uploaded data"):
+
+                st.dataframe(
+                    df.head(10),
+                    use_container_width=True
+                )
 
             st.divider()
 
-            st.subheader(
-                "🎚️ Urgent Routing Threshold"
-            )
+            st.subheader("🎚️ Urgent Routing Threshold")
 
             selected_threshold = st.slider(
                 "Choose probability threshold",
                 min_value=0.01,
                 max_value=0.50,
-                value=float(
-                    np.clip(
-                        default_threshold,
-                        0.01,
-                        0.50
-                    )
-                ),
+                value=RECALL_THRESHOLD,
                 step=0.01
             )
 
-            st.caption(
-                f"Current threshold: **{selected_threshold:.2f}**"
-            )
-
-            # ------------------------------------------------
-            # RUN
-            # ------------------------------------------------
-
             run_prediction = st.button(
-                "🚀 Run Batch Prediction",
+                "🚀 Run Demo Batch Prediction",
                 type="primary",
                 use_container_width=True
             )
 
             if run_prediction:
 
-                with st.spinner(
-                    "Running predictions..."
-                ):
+                results = df.copy()
 
-                    # TEXT
+                probabilities = []
 
-                    clean_summary = (
-                        df["Summary"]
-                        .fillna("")
-                        .astype(str)
-                        .str.lower()
-                        .str.strip()
+                priorities = []
+
+                for _, row in df.iterrows():
+
+                    text = str(
+                        row["Summary"]
+                    ).lower()
+
+                    urgent_keywords = [
+                        "crash",
+                        "crashes",
+                        "data loss",
+                        "security",
+                        "cannot start",
+                        "failure",
+                        "broken",
+                        "freeze",
+                        "hang",
+                        "critical",
+                        "blocker"
+                    ]
+
+                    keyword_score = sum(
+                        word in text
+                        for word in urgent_keywords
                     )
 
-                    X_text = tfidf.transform(
-                        clean_summary
-                    )
-
-                    # CATEGORICAL
-
-                    X_cat_df = pd.DataFrame({
-
-                        "Type": (
-                            df["Type"]
-                            .fillna("missing")
-                            .astype(str)
-                        ),
-
-                        "Component": (
-                            df["Component"]
-                            .fillna("missing")
-                            .astype(str)
-                        ),
-
-                        "OS": (
-                            df["OS"]
-                            .fillna("missing")
-                            .astype(str)
-                        ),
-
-                        "Version": (
-                            df["Version"]
-                            .fillna("missing")
-                            .astype(str)
-                        )
-                    })
-
-                    X_cat = encoder.transform(
-                        X_cat_df
-                    )
-
-                    # NUMERICAL
-
-                    X_num_df = pd.DataFrame({
-
-                        "summary_length": (
-                            clean_summary.str.len()
-                        ),
-
-                        "word_count": (
-                            clean_summary
-                            .str.split()
-                            .str.len()
-                        )
-                    })
-
-                    X_num = scaler.transform(
-                        X_num_df
-                    )
-
-                    X_num = sparse.csr_matrix(
-                        X_num
-                    )
-
-                    # FINAL FEATURES
-
-                    X_final = sparse.hstack([
-                        X_text,
-                        X_cat,
-                        X_num
-                    ]).tocsr()
-
-                    # MULTICLASS
-
-                    multiclass_pred = (
-                        model.predict(
-                            X_final
+                    probability = (
+                        0.05
+                        + 0.08 * keyword_score
+                        + 0.05 * min(
+                            len(text) / 500,
+                            1
                         )
                     )
 
-                    predicted_priority = (
-                        label_encoder.inverse_transform(
-                            multiclass_pred
+                    if str(row["Type"]).lower() == "blocker":
+                        probability += 0.10
+
+                    probability = float(
+                        np.clip(
+                            probability,
+                            0.01,
+                            0.95
                         )
                     )
 
-                    multiclass_proba = (
-                        model.predict_proba(
-                            X_final
-                        )
+                    probabilities.append(
+                        probability
                     )
 
-                    priority_confidence = (
-                        multiclass_proba.max(
-                            axis=1
-                        )
-                    )
+                    if probability >= 0.70:
+                        priorities.append("P1")
 
-                    # BINARY
+                    elif probability >= 0.50:
+                        priorities.append("P2")
 
-                    binary_proba = (
-                        binary_model
-                        .predict_proba(
-                            X_final
-                        )[:, 1]
-                    )
+                    elif probability >= 0.30:
+                        priorities.append("P3")
 
-                    urgent_prediction = (
-                        binary_proba >= selected_threshold
-                    ).astype(int)
+                    elif probability >= 0.15:
+                        priorities.append("P4")
 
-                    # RESULTS
+                    else:
+                        priorities.append("P5")
 
-                    results = df.copy()
+                results["Predicted_Priority_Demo"] = priorities
 
-                    results[
-                        "Predicted_Priority"
-                    ] = predicted_priority
+                results["Urgent_Probability_Demo"] = (
+                    probabilities
+                )
 
-                    results[
-                        "Priority_Confidence"
-                    ] = priority_confidence
+                results["Urgent_Review"] = np.where(
+                    results["Urgent_Probability_Demo"]
+                    >= selected_threshold,
+                    "URGENT",
+                    "NORMAL"
+                )
 
-                    results[
-                        "Urgent_Probability"
-                    ] = binary_proba
-
-                    results[
-                        "Urgent_Review"
-                    ] = np.where(
-                        urgent_prediction == 1,
-                        "URGENT",
-                        "NORMAL"
-                    )
-
-                    st.session_state[
-                        "batch_results"
-                    ] = results
-
-                    st.session_state[
-                        "batch_threshold"
-                    ] = selected_threshold
-
-            # ------------------------------------------------
-            # DISPLAY
-            # ------------------------------------------------
-
-            if "batch_results" in st.session_state:
-
-                results = st.session_state[
-                    "batch_results"
-                ]
-
-                threshold_used = (
-                    st.session_state.get(
-                        "batch_threshold",
-                        selected_threshold
-                    )
+                results["Threshold_Used"] = (
+                    selected_threshold
                 )
 
                 st.divider()
 
-                st.subheader(
-                    "📊 Prediction Results"
-                )
+                st.subheader("📊 Batch Results")
 
-                total_bugs = len(
-                    results
-                )
+                total_bugs = len(results)
 
                 urgent_count = (
-                    results[
-                        "Urgent_Review"
-                    ]
+                    results["Urgent_Review"]
                     .eq("URGENT")
                     .sum()
                 )
@@ -961,189 +819,193 @@ elif page == "📂 Batch Prediction":
                     else 0
                 )
 
-                col1, col2, col3, col4 = (
-                    st.columns(4)
-                )
+                col1, col2, col3, col4 = st.columns(4)
 
-                col1.metric(
-                    "Total Bugs",
-                    f"{total_bugs:,}"
-                )
+                with col1:
+                    st.metric(
+                        "Total Bugs",
+                        f"{total_bugs:,}"
+                    )
 
-                col2.metric(
-                    "Urgent Bugs",
-                    f"{urgent_count:,}"
-                )
+                with col2:
+                    st.metric(
+                        "Urgent",
+                        f"{urgent_count:,}"
+                    )
 
-                col3.metric(
-                    "Urgent Routing Rate",
-                    f"{routing_rate:.2%}"
-                )
+                with col3:
+                    st.metric(
+                        "Routing Rate",
+                        f"{routing_rate:.2%}"
+                    )
 
-                col4.metric(
-                    "Threshold Used",
-                    f"{threshold_used:.2f}"
-                )
+                with col4:
+                    st.metric(
+                        "Threshold",
+                        f"{selected_threshold:.2f}"
+                    )
 
                 st.dataframe(
                     results,
                     use_container_width=True
                 )
 
-                csv_data = (
-                    results
-                    .to_csv(index=False)
-                    .encode("utf-8")
-                )
+                csv_data = results.to_csv(
+                    index=False
+                ).encode("utf-8")
 
                 st.download_button(
-                    "⬇️ Download Predictions",
+                    "⬇️ Download Demo Predictions",
                     data=csv_data,
-                    file_name="bug_predictions.csv",
+                    file_name="bug_predictions_demo.csv",
                     mime="text/csv",
                     use_container_width=True
                 )
 
 
 # ============================================================
-# PAGE 4 — MODEL INSIGHTS
+# MODEL INSIGHTS
 # ============================================================
 
 elif page == "🔍 Model Insights":
 
     st.title("🔍 Model Insights")
 
-    st.markdown("""
-    Explore model performance, threshold selection, cost analysis,
-    temporal robustness and the human-in-the-loop deployment strategy.
-    """)
-
-    # --------------------------------------------------------
-    # MODEL PERFORMANCE
-    # --------------------------------------------------------
-
-    st.subheader(
-        "📈 Model Performance"
+    st.markdown(
+        """
+        Explore model evaluation, threshold selection,
+        cost-sensitive decisions and temporal robustness.
+        """
     )
+
+    st.subheader("📈 Model Performance")
 
     col1, col2, col3 = st.columns(3)
 
-    col1.metric(
-        "Multiclass Accuracy",
-        f"{metadata['multiclass_accuracy']:.2%}"
-    )
+    with col1:
+        st.metric(
+            "Multiclass Accuracy",
+            f"{MULTICLASS_ACCURACY:.2%}"
+        )
 
-    col2.metric(
-        "Multiclass Macro-F1",
-        f"{metadata['multiclass_macro_f1']:.3f}"
-    )
+    with col2:
+        st.metric(
+            "Multiclass Macro-F1",
+            f"{MULTICLASS_MACRO_F1:.3f}"
+        )
 
-    col3.metric(
-        "Binary Accuracy",
-        f"{metadata['binary_accuracy']:.2%}"
+    with col3:
+        st.metric(
+            "Binary Accuracy",
+            f"{BINARY_ACCURACY:.2%}"
+        )
+
+    st.divider()
+
+    st.subheader("🚨 Default Urgent Classification")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.metric(
+            "Urgent Precision",
+            f"{DEFAULT_PRECISION:.2%}"
+        )
+
+    with col2:
+        st.metric(
+            "Urgent Recall",
+            f"{DEFAULT_RECALL:.2%}"
+        )
+
+    with col3:
+        st.metric(
+            "Urgent F1",
+            f"{DEFAULT_F1:.3f}"
+        )
+
+    st.markdown(
+        """
+        At the default 0.50 threshold, overall binary accuracy
+        is relatively high, but urgent-bug recall is low.
+
+        This illustrates why accuracy alone is not sufficient for
+        an imbalanced urgent-bug screening problem.
+        """
     )
 
     st.divider()
 
-    # --------------------------------------------------------
-    # DEFAULT BINARY PERFORMANCE
-    # --------------------------------------------------------
+    st.subheader("🎯 Threshold Strategies")
 
-    st.subheader(
-        "🚨 Default Urgent Classification"
-    )
-
-    col1, col2, col3 = st.columns(3)
-
-    col1.metric(
-        "Urgent Precision",
-        f"{metadata['urgent_precision_default']:.2%}"
-    )
-
-    col2.metric(
-        "Urgent Recall",
-        f"{metadata['urgent_recall_default']:.2%}"
-    )
-
-    col3.metric(
-        "Urgent F1",
-        f"{metadata['urgent_f1_default']:.3f}"
-    )
-
-    st.markdown("""
-    At the default 0.50 probability threshold, the binary model
-    has high overall accuracy but catches relatively few urgent
-    bugs. This motivates threshold tuning.
-    """)
-
-    st.divider()
-
-    # --------------------------------------------------------
-    # THRESHOLD STRATEGIES
-    # --------------------------------------------------------
-
-    st.subheader(
-        "🎯 Threshold Strategies"
-    )
-
-    threshold_df = pd.DataFrame({
-
-        "Strategy": [
-            "Default",
-            "80% Recall Target",
-            "Cost-Minimizing"
-        ],
-
-        "Threshold": [
-            metadata["default_threshold"],
-            metadata["urgent_recall_threshold"],
-            metadata["cost_minimizing_threshold"]
-        ],
-
-        "Precision": [
-            metadata["urgent_precision_default"],
-            metadata["recall_target_precision"],
-            0.2171
-        ],
-
-        "Recall": [
-            metadata["urgent_recall_default"],
-            metadata["recall_target_recall"],
-            0.8729
-        ]
-    })
-
-    display_df = threshold_df.copy()
-
-    display_df["Threshold"] = (
-        display_df["Threshold"]
-        .map(lambda x: f"{x:.3f}")
-    )
-
-    display_df["Precision"] = (
-        display_df["Precision"]
-        .map(lambda x: f"{x:.2%}")
-    )
-
-    display_df["Recall"] = (
-        display_df["Recall"]
-        .map(lambda x: f"{x:.2%}")
+    threshold_df = pd.DataFrame(
+        {
+            "Strategy": [
+                "Default",
+                "80% Recall Target",
+                "Cost-Minimizing"
+            ],
+            "Threshold": [
+                DEFAULT_THRESHOLD,
+                RECALL_THRESHOLD,
+                COST_THRESHOLD
+            ],
+            "Precision": [
+                DEFAULT_PRECISION,
+                RECALL_TARGET_PRECISION,
+                COST_PRECISION
+            ],
+            "Recall": [
+                DEFAULT_RECALL,
+                RECALL_TARGET_RECALL,
+                COST_RECALL
+            ]
+        }
     )
 
     st.dataframe(
-        display_df,
+        threshold_df.style.format(
+            {
+                "Threshold": "{:.3f}",
+                "Precision": "{:.2%}",
+                "Recall": "{:.2%}"
+            }
+        ),
         use_container_width=True,
         hide_index=True
     )
 
     st.divider()
 
-    # --------------------------------------------------------
-    # PRECISION RECALL
-    # --------------------------------------------------------
+    st.subheader("📊 Precision–Recall Trade-Off")
 
-    st.subheader(
-        "📊 Precision–Recall Trade-Off"
+    plot_df = pd.DataFrame(
+        {
+            "Threshold": [
+                0.50,
+                0.30,
+                0.20,
+                0.10,
+                0.097,
+                0.08
+            ],
+            "Precision": [
+                0.571,
+                0.454,
+                0.375,
+                0.247,
+                0.2435,
+                0.2171
+            ],
+            "Recall": [
+                0.1237,
+                0.375,
+                0.471,
+                0.780,
+                0.8007,
+                0.8729
+            ]
+        }
     )
 
     fig, ax = plt.subplots(
@@ -1151,15 +1013,15 @@ elif page == "🔍 Model Insights":
     )
 
     ax.plot(
-        threshold_df["Threshold"],
-        threshold_df["Precision"],
+        plot_df["Threshold"],
+        plot_df["Precision"],
         marker="o",
         label="Precision"
     )
 
     ax.plot(
-        threshold_df["Threshold"],
-        threshold_df["Recall"],
+        plot_df["Threshold"],
+        plot_df["Recall"],
         marker="o",
         label="Recall"
     )
@@ -1173,7 +1035,7 @@ elif page == "🔍 Model Insights":
     )
 
     ax.set_title(
-        "Precision vs Recall at Selected Operating Points"
+        "Precision vs Recall"
     )
 
     ax.legend()
@@ -1182,258 +1044,193 @@ elif page == "🔍 Model Insights":
         alpha=0.3
     )
 
-    st.pyplot(
-        fig
-    )
+    st.pyplot(fig)
 
     plt.close(fig)
 
     st.divider()
 
-    # --------------------------------------------------------
-    # OPERATING POINT
-    # --------------------------------------------------------
-
-    st.subheader(
-        "🎯 80% Recall Operating Point"
-    )
-
-    recommended_threshold = (
-        metadata["urgent_recall_threshold"]
-    )
+    st.subheader("🎯 80% Recall Operating Point")
 
     col1, col2, col3 = st.columns(3)
 
-    col1.metric(
-        "Threshold",
-        f"{recommended_threshold:.3f}"
-    )
+    with col1:
+        st.metric(
+            "Threshold",
+            f"{RECALL_THRESHOLD:.3f}"
+        )
 
-    col2.metric(
-        "Urgent Recall",
-        f"{metadata['recall_target_recall']:.2%}"
-    )
+    with col2:
+        st.metric(
+            "Urgent Recall",
+            f"{RECALL_TARGET_RECALL:.2%}"
+        )
 
-    col3.metric(
-        "Urgent Precision",
-        f"{metadata['recall_target_precision']:.2%}"
-    )
+    with col3:
+        st.metric(
+            "Urgent Precision",
+            f"{RECALL_TARGET_PRECISION:.2%}"
+        )
 
     st.info(
         f"""
-        The threshold of **{recommended_threshold:.3f}**
-        corresponds to approximately **80% urgent recall**
-        on the evaluation data.
+        A threshold of **{RECALL_THRESHOLD:.3f}** corresponds to
+        approximately **80% urgent recall** on the evaluation data.
 
-        This operating point can be adjusted according to
-        review capacity and the relative cost of false negatives
-        and false positives.
+        This is an operating point rather than a universally optimal
+        threshold. It should be adjusted based on review capacity
+        and business costs.
         """
     )
 
     st.divider()
 
-    # --------------------------------------------------------
-    # COST ANALYSIS
-    # --------------------------------------------------------
-
-    st.subheader(
-        "💰 Cost-Sensitive Decision Making"
-    )
-
-    fn_cost = metadata["fn_cost"]
-    fp_cost = metadata["fp_cost"]
+    st.subheader("💰 Cost-Sensitive Decision Making")
 
     st.markdown(
         f"""
-        The cost framework assumes:
+        The project used a cost framework where:
 
-        **False Negative cost = {fn_cost}**
+        **False Negative cost = {FN_COST}**
 
-        **False Positive cost = {fp_cost}**
+        **False Positive cost = {FP_COST}**
 
-        Therefore, a missed urgent bug is treated as
-        **{fn_cost / fp_cost:.0f}× more costly** than an unnecessary
+        Therefore, the assumed cost of missing an urgent bug is
+        **{FN_COST / FP_COST:.0f}×** the cost of an unnecessary
         urgent review.
         """
     )
 
-    cost_comparison = pd.DataFrame({
+    st.warning(
+        """
+        The 10:1 cost ratio is a modeling assumption. In production,
+        these costs should be estimated using actual engineering,
+        incident and triage costs.
+        """
+    )
 
-        "Strategy": [
-            "Default",
-            "80% Recall Target",
-            "Cost-Minimizing"
-        ],
+    st.divider()
 
-        "Threshold": [
-            metadata["default_threshold"],
-            metadata["urgent_recall_threshold"],
-            metadata["cost_minimizing_threshold"]
-        ],
+    st.subheader("🕒 Temporal Robustness & Distribution Shift")
 
-        "Urgent Recall": [
-            metadata["urgent_recall_default"],
-            metadata["recall_target_recall"],
-            0.8729
-        ],
-
-        "Precision": [
-            metadata["urgent_precision_default"],
-            metadata["recall_target_precision"],
-            0.2171
-        ]
-    })
+    temporal_comparison = pd.DataFrame(
+        {
+            "Evaluation": [
+                "Random Split",
+                "Temporal Split"
+            ],
+            "Accuracy": [
+                MULTICLASS_ACCURACY,
+                TEMPORAL_ACCURACY
+            ],
+            "Macro F1": [
+                MULTICLASS_MACRO_F1,
+                TEMPORAL_MACRO_F1
+            ]
+        }
+    )
 
     st.dataframe(
-        cost_comparison.style.format({
-            "Threshold": "{:.3f}",
-            "Urgent Recall": "{:.2%}",
-            "Precision": "{:.2%}"
-        }),
+        temporal_comparison.style.format(
+            {
+                "Accuracy": "{:.2%}",
+                "Macro F1": "{:.3f}"
+            }
+        ),
         use_container_width=True,
         hide_index=True
     )
 
-    st.warning("""
-    The 10:1 cost ratio is a modeling assumption. Before
-    production deployment, these costs should be calibrated
-    using actual engineering and triage costs.
-    """)
+    st.warning(
+        f"""
+        Performance decreased under temporal distribution shift:
+
+        - Accuracy: **66.75% → 61.70%**
+        - Macro-F1: **0.326 → 0.303**
+
+        The urgent-bug base rate increased to approximately
+        **31.0%**, while default-threshold urgent recall dropped
+        to **3.1%**.
+
+        A recalibrated threshold of **{TEMPORAL_THRESHOLD:.4f}**
+        produced approximately **80% recall** at **41.4% precision**
+        on the temporal evaluation.
+        """
+    )
+
+    st.caption(
+        """
+        Note: the temporal split uses updated_date because a reliable
+        creation timestamp was unavailable. Therefore, the future
+        window may include reopened or escalated bugs rather than
+        exclusively newly created reports.
+        """
+    )
 
     st.divider()
 
-    # --------------------------------------------------------
-    # HUMAN IN LOOP
-    # --------------------------------------------------------
+    st.subheader("👤 Human-in-the-Loop Deployment")
 
-    st.subheader(
-        "👤 Human-in-the-Loop"
+    st.markdown(
+        """
+        **Bug Report**
+
+        ↓
+
+        **ML Priority Prediction**
+
+        ↓
+
+        **Urgent Probability**
+
+        ↓
+
+        **Threshold**
+
+        ↓
+
+        **Urgent Review Queue**
+
+        ↓
+
+        **Human Triager**
+
+        ↓
+
+        **Final Priority Decision**
+        """
     )
 
-    st.markdown("""
-    ### Deployment workflow
-
-    **Bug Report**
-
-    ↓
-
-    **ML Priority Prediction**
-
-    ↓
-
-    **Urgent Probability**
-
-    ↓
-
-    **Threshold**
-
-    ↓
-
-    **Urgent Review Queue**
-
-    ↓
-
-    **Human Triager**
-
-    ↓
-
-    **Final Priority Decision**
-    """)
-
-    st.info("""
-    The model is a decision-support system. It does not
-    autonomously determine the final bug priority.
-    """)
+    st.info(
+        """
+        The model is a decision-support system. It does not
+        autonomously determine the final bug priority.
+        """
+    )
 
     st.divider()
 
-    # --------------------------------------------------------
-    # PRODUCT INTERPRETATION
-    # --------------------------------------------------------
+    st.subheader("🎯 Product Interpretation")
 
-    st.subheader(
-        "🎯 Product Interpretation"
+    st.markdown(
+        """
+        The deployment problem is not simply maximizing accuracy.
+
+        A lower threshold can increase the number of urgent bugs
+        identified, but it also increases the workload placed on
+        human triagers.
+
+        Therefore, threshold selection should consider:
+
+        - Cost of missed urgent bugs
+        - Cost of unnecessary reviews
+        - Human-review capacity
+        - Changes in the urgent-bug base rate
+        - Distribution shift over time
+
+        In production, the threshold should be monitored and
+        recalibrated as the data distribution changes.
+        """
     )
-
-    st.markdown("""
-    The key deployment trade-off is not simply accuracy.
-
-    A lower threshold increases the number of potentially urgent
-    bugs caught by the system, but also increases the number of
-    normal bugs sent to human reviewers.
-
-    The threshold can therefore be adjusted according to
-    triage capacity and the relative cost of false negatives
-    versus false positives.
-    """)
-
-    st.divider()
-
-    # --------------------------------------------------------
-    # TEMPORAL ROBUSTNESS
-    # --------------------------------------------------------
-
-    st.subheader(
-        "🕒 Temporal Robustness & Distribution Shift"
-    )
-
-    st.markdown("""
-    A temporal holdout was evaluated to test whether model
-    performance remains stable when predicting on data from
-    a later time period.
-
-    This is important because bug characteristics, components,
-    versions, and priority patterns can change over time.
-    """)
-
-    temporal_comparison = pd.DataFrame({
-
-        "Evaluation": [
-            "Random Split",
-            "Temporal Split"
-        ],
-
-        "Accuracy": [
-            0.6675,
-            0.6170
-        ],
-
-        "Macro F1": [
-            0.3256,
-            0.3027
-        ]
-    })
-
-    st.dataframe(
-        temporal_comparison.style.format({
-            "Accuracy": "{:.2%}",
-            "Macro F1": "{:.3f}"
-        }),
-        use_container_width=True,
-        hide_index=True
-    )
-
-    st.warning("""
-    **Key takeaway:** Performance decreased under temporal
-    distribution shift, with accuracy falling from **66.75% to
-    61.70%** and Macro-F1 from **0.326 to 0.303**.
-
-    Urgent-bug base rate rose from **10.4% to 31.0%**, and the
-    default threshold's urgent recall dropped to **3.1%**.
-
-    A recalibrated threshold of **0.0658** restored approximately
-    **80% recall** at **41.4% precision**, showing that threshold
-    calibration may need to be revisited as the data distribution
-    changes.
-    """)
-
-    st.caption("""
-    Note: the temporal split uses updated_date because a creation
-    timestamp was unavailable. The future window may therefore
-    include reopened or escalated bugs rather than purely new
-    reports.
-    """)
-
 
 
