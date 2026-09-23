@@ -81,7 +81,7 @@ Everything above uses a random train/test split, which assumes the test set look
 
 The accuracy/F1 drop is fairly mild on its own. What's actually alarming is the base rate of urgent bugs nearly tripled between the two periods — from about 10.4% of training data to 31.0% of the later test window — and the default threshold's recall collapsed to 3.1%. A threshold that worked fine at training time basically stopped working once the underlying data shifted.
 
-One important caveat: I don't have a reliable bug creation date in this dataset, so I used updated_date as the closest available proxy for chronological order. That means the "future" window might include bugs that were reopened or re-triaged, not just newly filed ones — which could partly explain the base-rate jump (urgent bugs get touched more often because they're urgent). I couldn't fully verify this against the raw data, so I'm treating this result as an upper-bound estimate of drift, not a precise simulation of deployment.
+One important note: I don't have a reliable bug creation date in this dataset, so I used updated_date as the closest available proxy for chronological order. That means the "future" window might include bugs that were reopened or re-triaged, not just newly filed ones — which could partly explain the base-rate jump (urgent bugs get touched more often because they're urgent). I couldn't fully verify this against the raw data, so I'm treating this result as an upper-bound estimate of drift, not a precise simulation of deployment.
 
 The takeaway I actually trust: a threshold picked once during development isn't safe to leave fixed forever. It needs to be monitored and recalibrated as the data shifts, the same way you'd manage a fraud or spam threshold.
 
@@ -91,22 +91,23 @@ I built a Streamlit app on top of this — a home page, a dashboard with the thr
 
 The threshold is a slider, not a fixed number baked into the code — because after seeing how much the "right" threshold moved under the temporal test, I didn't want to pretend there's one correct value.
 
-Limitations (being honest about what this isn't)
-Historical priorities came from human triage decisions, which may be inconsistent or biased — the model inherits whatever patterns are in that history, good or bad.
-TF-IDF only captures word overlap, not meaning — two bugs describing the same issue in different words might get very different treatment.
-The 10:1 false-negative/false-positive cost ratio is an assumption I made up as a reasonable starting point, not something calibrated from real operational data.
-"P1/P2 = Urgent" is a framing choice I made, not an objective fact about the data.
-The temporal split used updated_date, not a true creation date, for the reasons explained above.
-Predicted probabilities weren't explicitly calibrated, so the thresholds assume the model's raw probability outputs are reasonably trustworthy.
-This should be monitored after deployment — bug types, components, and priority patterns can and will drift.
+Limitations: 
+- Historical priorities came from human triage decisions, which may be inconsistent or biased — the model inherits whatever patterns are in that history, good or bad.
+- TF-IDF only captures word overlap, not meaning — two bugs describing the same issue in different words might get very different treatment.
+- The 10:1 false-negative/false-positive cost ratio is an assumption I made up as a reasonable starting point, not something calibrated from real operational data.
+- "P1/P2 = Urgent" is a framing choice I made, not an objective fact about the data.
+- The temporal split used updated_date, not a true creation date, for the reasons explained above.
+- Predicted probabilities weren't explicitly calibrated, so the thresholds assume the model's raw probability outputs are reasonably trustworthy.
+- This should be monitored after deployment — bug types, components, and priority patterns can and will drift.
+
 Where this leaves things
 
-The project moved from "predict the exact priority" to something more useful: a system that flags bugs as urgent or not, with a threshold that can be adjusted based on how much review capacity a team has and how costly a missed urgent bug actually is. The main finding, honestly, isn't a number — it's that the threshold matters more than the model, and that whatever threshold you pick needs to be revisited over time, not set once and forgotten.
+- The project moved from "predict the exact priority" to something more useful: a system that flags bugs as urgent or not, with a threshold that can be adjusted based on how much review capacity a team has and how costly a missed urgent bug actually is. The main finding, honestly, isn't a number, it's that the threshold matters more than the model, and that whatever threshold you pick needs to be revisited over time, not set once and forgotten.
 
 This is built to be a decision-support tool, not an autonomous system. A human still makes the final call — the model just helps make sure the right bugs get looked at first.
 
 Next steps, if I kept going
-Calibrate the cost ratio with real data instead of an assumption.
-Get a real bug creation date and re-run the temporal validation properly.
-Add BERT-style embeddings to see if they pick up on semantic similarity that TF-IDF misses.
-Build the monitoring loop I keep describing but haven't actually implemented — tracking predicted vs. actual urgent rate over time and triggering re-calibration automatically.
+- Calibrate the cost ratio with real data instead of an assumption.
+- Get a real bug creation date and re-run the temporal validation properly.
+- Add BERT-style embeddings to see if they pick up on semantic similarity that TF-IDF misses.
+- Build the monitoring loop I keep describing but haven't actually implemented — tracking predicted vs. actual urgent rate over time and triggering re-calibration automatically.
