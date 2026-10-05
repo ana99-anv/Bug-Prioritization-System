@@ -90,6 +90,15 @@ The app
 
 I built a Streamlit app on top of this that has a home page, a dashboard with the threshold comparison table, a single-bug prediction page with an adjustable threshold slider, a batch-prediction page that takes a CSV and returns a downloadable file of predictions, and a model-insights page that shows the precision/recall trade-off and the cost assumptions explicitly, instead of hiding them in a notebook.
 
+
+<img width="932" height="401" alt="Screenshot 2026-09-22 200201" src="https://github.com/user-attachments/assets/38394c2d-1835-42db-8656-d559d3535a09" />
+
+<img width="919" height="387" alt="Screenshot 2026-09-22 200253" src="https://github.com/user-attachments/assets/61c34bcf-9a37-4318-9b0f-2cd7d855c0e6" />
+
+<img width="944" height="380" alt="Screenshot 2026-09-22 200318" src="https://github.com/user-attachments/assets/2356dc4f-67ad-4207-8315-b180cfed1f0b" />
+
+
+
 The threshold is a slider, not a fixed number baked into the code — because after seeing how much the "right" threshold moved under the temporal test, I didn't want to pretend there's one correct value.
 
 Limitations: 
